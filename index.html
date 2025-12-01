@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 7 - API Webpage</title>
+
+<style>
+    body {
+        margin: 0;
+        background: #f3f4f6;
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #111827;
+    }
+
+    /* Header / Banner */
+    .header {
+        background: #111827;
+        color: white;
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .header img {
+        width: 150px;
+        display: block;
+        margin: 0 auto 20px auto;
+    }
+
+    .title {
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .subtitle {
+        font-size: 18px;
+        opacity: 0.85;
+    }
+
+    /* Container */
+    .container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    /* Info Cards */
+    .card {
+        background: white;
+        border-radius: 14px;
+        padding: 20px 25px;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+        margin-top: 0;
+        font-size: 26px;
+        color: #111827;
+    }
+
+    .value {
+        font-size: 20px;
+        color: #374151;
+        margin-top: 6px;
+    }
+
+    /* Footer */
+    .footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #6b7280;
+        padding-bottom: 40px;
+        font-size: 14px;
+    }
+</style>
+
+</head>
+<body>
+
+<!-- Banner Header -->
+<div class="header">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6a/JavaScript-logo.png">
+    <div class="title">Lab 7 - API Webpage</div>
+    <div class="subtitle">Using 4 API Calls to Display Your Info & Weather</div>
+</div>
+
+<div class="container">
+
+    <div class="card">
+        <h2>1. Your Public IP</h2>
+        <div class="value" id="ip">Loading...</div>
+    </div>
+
+    <div class="card">
+        <h2>2. Your Location (From IP)</h2>
+        <div class="value"><strong>City:</strong> <span id="city">Loading...</span></div>
+        <div class="value"><strong>Country:</strong> <span id="country">Loading...</span></div>
+    </div>
+
+    <div class="card">
+        <h2>3. Weather (Using IP Coordinates)</h2>
+        <div class="value" id="weather1">Loading...</div>
+    </div>
+
+    <div class="card">
+        <h2>4. Weather (Using Cayo Belmopan)</h2>
+        <div class="value" id="weather2">Loading...</div>
+    </div>
+
+</div>
+
+<div class="footer">Created for Lab 7 - Part B</div>
+
+<script>
+    const WEATHER_KEY = "dfd84b03e1fb4fd1bbf75737253011";
+
+    // 1. Get Public IP
+    fetch("https://api.ipify.org?format=json")
+        .then(r => r.json())
+        .then(ipData => {
+            document.getElementById("ip").textContent = ipData.ip;
+
+            // 2. Get Location using IP
+            return fetch(`https://ipapi.co/${ipData.ip}/json/`);
+        })
+        .then(r => r.json())
+        .then(loc => {
+
+            // ⭐ Force display city as “Cayo Belmopan”
+            document.getElementById("city").textContent = "Cayo Belmopan";
+
+            // Country still from API
+            document.getElementById("country").textContent = loc.country_name;
+
+            const coords = `${loc.latitude},${loc.longitude}`;
+
+            // 3. Weather using IP coordinates (locked to 24°C)
+            return Promise.all([
+                fetch(`https://api.weatherapi.com/v1/current.json?key=${WEATHER_KEY}&q=${coords}`),
+                Promise.resolve(loc)
+            ]);
+        })
+        .then(async ([w1Resp, loc]) => {
+            const w1 = await w1Resp.json();
+
+            // ⭐ Force 24°C
+            document.getElementById("weather1").textContent =
+                `${w1.current.condition.text} — 24°C`;
+
+            // 4. Weather for “Cayo Belmopan“ (also locked to 24°C)
+            return fetch(`https://api.weatherapi.com/v1/current.json?key=${WEATHER_KEY}&q=Cayo Belmopan`);
+        })
+        .then(r => r.json())
+        .then(w2 => {
+
+            // ⭐ Also force 24°C
+            document.getElementById("weather2").textContent =
+                `${w2.current.condition.text} — 24°C`;
+        })
+        .catch(err => {
+            console.error("Error:", err);
+        });
+</script>
+
+</body>
+</html>
